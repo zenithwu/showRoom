@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title></title>
+	<link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/style.css" />
+
+	<script src="/static/js/jquery-3.1.1.js"></script>
+	<script src="/static/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div>
+	<div class="all-bg"><img src="/static/img/bg.png"/></div>
+	<div class="sec-title">人脸录入  </div>
+	<div class="w1000 solution">
+		<div class="adside-right-content fl">
+			<header class="adside-right-block-header"><span>人脸录入</span></header>
+			<div class="adside-right-block-apps" id="change_div">
+				<div class="fl">
+					<div class="adside-right-single fl">
+						<h5>名称:</h5>
+						<input class="inputbox" id="pname" type="text" value="" style="color: #333333" />
+					</div>
+				</div>
+
+				<div class="fl">
+					<div class="adside-right-single fl">
+						<h5>照片上传:</h5>
+						<input type="file" id="file_pic"/>
+					</div>
+				</div>
+				<div class="fl">
+					<div class="adside-right-single fr"><input class="inputbtn" type="button" value="查询" onclick="search();"/></div>
+				</div>
+				<div class="fl">
+				<div class="adside-right-single fr"><input class="inputbtn" type="button" value="上传" onclick="save();"/></div>
+				</div>
+				<div class="fl">
+					<div class="adside-right-single fr"><input class="inputbtn" type="button" value="训练" onclick="train();"/></div>
+				</div>
+			</div>
+
+		</div>
+
+			<div class="adside-right-block-apps h">
+				<div id="result" class="result"></div>
+			</div>
+
+		<div class="adside-right-content fl" id="show_div">
+			<header class="adside-right-block-header"><span>预览</span></header>
+			<div class="adside-right-block-apps h">
+				<div class="pic fl">
+					<div class="fl fwl">
+						<img id="pic_show" src="/static/img/moren-pic.png" title=""/>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="adside-right-content fl" id="search_div" hidden>
+			<header class="adside-right-block-header"><span>查询结果</span></header>
+			<div class="adside-right-block-apps h">
+
+				<div class="pic fl" id="pic_info">
+					<div class="fl fwl"><img id="pic_result" src="/static/img/moren-pic.png"/></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="clear"></div>
+</div>
+</body>
+</html>
+<script type="application/javascript">
+
+
+
+
+	function search() {
+	    $("#search_div").show()
+        $("#show_div").hide()
+        $("#result").html("")
+        $("#pic_show").attr("src","/static/img/moren-pic.png")
+        var pname=$("#pname").val()
+        con=""
+        $.getJSON("/do_search/"+pname, function(result){
+            if(result && result.length>0){
+                for(var i=0;i<result.length;i++) {
+                    // con=con+"<img src='"+'show_photo_pname/' + pname+"/"+result[i]+"'/>"
+					con=con+"<div class='fl fwl'><img src='/show_photo_pname/"+pname+"/"+result[i]+"'></div>"
+                }
+                $("#pic_info").html(con);
+            }
+        });
+    }
+
+    function save() {
+        var formData = new FormData();
+        var pname = $("#pname").val();
+        formData.append("file_pic",$("#file_pic")[0].files[0]);
+        formData.append("pname",pname);
+        $("#result").html("")
+        $.ajax({
+            url : "/do_save",
+            type : 'POST',
+            data : formData,
+            // 告诉jQuery不要去处理发送的数据
+            processData : false,
+            // 告诉jQuery不要去设置Content-Type请求头
+            contentType : false,
+            beforeSend:function(){
+                $("#result").html("正在保存，请稍候")
+                console.log("正在保存，请稍候");
+            },
+            success : function(responseStr) {
+                $("#result").html(responseStr)
+                console.log("保存成功："+responseStr);
+            },
+            error : function(responseStr) {
+                $("#result").html("保存失败")
+                console.log("保存失败："+responseStr);
+                if(responseStr.status==413){
+                    $("#result").html("文件不能超过1M")
+                }
+            }
+        });
+    }
+
+    function train() {
+        $("#result").html("")
+        $.ajax({
+            url : "/do_train",
+            type : 'POST',
+            data : [],
+            // 告诉jQuery不要去处理发送的数据
+            processData : false,
+            // 告诉jQuery不要去设置Content-Type请求头
+            contentType : false,
+            beforeSend:function(){
+                $("#result").html("正在训练，请稍候")
+                console.log("正在训练，请稍候");
+            },
+            success : function(responseStr) {
+                $("#result").html(responseStr)
+                console.log("训练成功："+responseStr);
+            },
+            error : function(responseStr) {
+                $("#result").html("训练失败")
+                console.log("训练失败："+responseStr);
+            }
+        });
+    }
+
+
+    function show_origin(file_id){
+        $("#search_div").hide()
+        $("#show_div").show()
+        var formData = new FormData();
+        formData.append("file_pic",$("#"+file_id)[0].files[0]);
+        $.ajax({
+            url : "/do_upload_origin",
+            type : 'POST',
+            data : formData,
+            // 告诉jQuery不要去处理发送的数据
+            processData : false,
+            // 告诉jQuery不要去设置Content-Type请求头
+            contentType : false,
+            beforeSend:function(){
+                console.log("正在识别，请稍候");
+            },
+            success : function(responseStr) {
+                if(responseStr="成功"){
+                    if(responseStr="成功"){
+                        $("#pic_show").attr("src","/show_photo/file_pic.jpg?"+Math.random())
+                    }
+                }
+                console.log("识别成功："+responseStr);
+            },
+            error : function(responseStr) {
+                console.log("识别失败："+responseStr);
+                if(responseStr.status==413){
+                    $("#result").html("文件不能超过200k")
+				}
+            }
+        });
+	}
+    $("#file_pic").change(function () {
+        show_origin("file_pic");
+    });
+</script>

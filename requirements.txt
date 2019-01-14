@@ -1,0 +1,6 @@
+scikit-learn
+flask
+configparser
+face_recognition_models
+face_recognition
+scipy
