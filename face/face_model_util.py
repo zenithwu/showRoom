@@ -50,7 +50,7 @@ def train_model(model_save_path=None,train_dir=None):
             pickle.dump(knn_clf, f)
     print("Training complete!")
     end_time=time.time()
-    return str(end_time-begin_time)
+    return "%.2f" % (end_time-begin_time)
 if __name__ == '__main__':
     train_model(os.path.join("data/model","trained_knn_model.clf"),"data/train")
 
