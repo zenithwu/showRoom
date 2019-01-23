@@ -4,7 +4,7 @@ import io
 import json
 import os
 import pickle
-import threading
+from threading import Thread
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -20,7 +20,7 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 APP_DATA = os.path.join(APP_ROOT, 'face', 'data')
-executor = ThreadPoolExecutor(2)
+# executor = ThreadPoolExecutor(2)
 
 
 @app.route('/')
@@ -117,6 +117,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+#rest begin
 @app.route('/detect_faces_in_image', methods=['POST'])
 def detect_faces_in_image():
     print(time.time())
@@ -144,6 +145,29 @@ def detect_faces_in_image():
         pass
     return name
 
+
+@app.route('/do_add_face', methods=['POST'])
+def do_add_face():
+    fstr = request.form['fstr']
+    if fstr is None or fstr == "" or len(fstr) < 1:
+        return "需要传入图片"
+    pname = request.form['pname']
+    if pname is None or pname == "" or len(pname) < 1:
+        return "需要传入姓名"
+    try:
+        img_b64decode = base64.b64decode(fstr)
+        pic_path = os.path.join(APP_DATA, 'train', pname)
+        if not os.path.exists(pic_path):
+            os.mkdir(pic_path)
+        img_path = os.path.join(APP_DATA, 'train', pname, str(uuid.uuid4()) + ".jpg")
+        open(img_path,'wb').write(img_b64decode)
+        result = "上传成功"
+        thr = Thread(target = train_model, args =(os.path.join(APP_DATA, "model", "trained_knn_model.clf"), os.path.join(APP_DATA, "train")))
+        thr.start()
+    except:
+        result="上传失败"
+    return result
+#rest end
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port='8088', debug=False, threaded=True)
